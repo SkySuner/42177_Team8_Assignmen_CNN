@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from collections import Counter
 
 # =========================
-# 1️⃣ Dataset 保持一致
+# 1️⃣ Dataset
 # =========================
 class SpinalDataset(torch.utils.data.Dataset):
     def __init__(self, img_root, label_file, subsets, transform=None):
@@ -45,7 +45,7 @@ class SpinalDataset(torch.utils.data.Dataset):
 
 
 # =========================
-# 2️⃣ CNN 模型定义（和你训练用的完全一样）
+# 2️⃣ CNN
 # =========================
 class SimpleCNN(nn.Module):
     def __init__(self):
@@ -81,7 +81,7 @@ class SimpleCNN(nn.Module):
 
 
 # =========================
-# 3️⃣ Cobb角 → 分类标签映射
+# 3️⃣ Cobb
 # =========================
 def cobb_to_class(angles):
     """angles: Tensor [B,3] -> 返回每张图的分类标签 [B]"""
@@ -94,7 +94,7 @@ def cobb_to_class(angles):
 
 
 # =========================
-# 4️⃣ 主测试逻辑
+# 4️⃣ test
 # =========================
 if __name__ == "__main__":
     data_root = "Spinal-AI2024"
@@ -132,15 +132,15 @@ if __name__ == "__main__":
             trues.extend(true_classes.numpy())
 
     # =========================
-    # 5️⃣ 计算准确率 + 混淆矩阵
+    # 5️⃣ ACC
     # =========================
     acc = accuracy_score(trues, preds)
-    print(f"✅ 分类准确率 (Normal/Mild/Moderate/Severe): {acc * 100:.2f}%")
+    print(f"✅ Acc (Normal/Mild/Moderate/Severe): {acc * 100:.2f}%")
 
-    print("预测类别分布:", Counter(preds))
-    print("真实类别分布:", Counter(trues))
+    print("Prediction Distribution:", Counter(preds))
+    print("real Class Distribution:", Counter(trues))
 
-    # 可视化混淆矩阵
+    # Matrix
     cm = confusion_matrix(trues, preds, labels=[0, 1, 2, 3])
     plt.figure(figsize=(6, 5))
     plt.xlabel("Predicted")
@@ -149,3 +149,4 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig("cnn_confusion_matrix.png", dpi=300)
     plt.show()
+
