@@ -84,7 +84,6 @@ class SimpleCNN(nn.Module):
 # 3️⃣ Cobb
 # =========================
 def cobb_to_class(angles):
-    """angles: Tensor [B,3] -> 返回每张图的分类标签 [B]"""
     max_angle = torch.max(angles, dim=1)[0]
     classes = torch.zeros_like(max_angle, dtype=torch.long)
     classes[(max_angle >= 10) & (max_angle < 25)] = 1
@@ -149,4 +148,5 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig("cnn_confusion_matrix.png", dpi=300)
     plt.show()
+
 
