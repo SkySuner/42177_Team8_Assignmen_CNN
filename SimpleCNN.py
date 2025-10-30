@@ -7,34 +7,26 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 import torchvision.models as models
-from tqdm import tqdm  # ✅ 进度条
+from tqdm import tqdm  
 # =========================
-# 1️⃣ 自定义 Dataset（自动从多个文件夹查找图像）
+# 1️⃣ Dataset
 # =========================
 class SpinalDataset(Dataset):
     def __init__(self, img_root, label_file, subsets, transform=None):
-        """
-        img_root: 数据集根目录，如 "Spinal-AI2024"
-        label_file: 标注文件路径
-        subsets: 使用的子文件夹列表，例如 ["subset1", "subset2", "subset3", "subset4"]
-        transform: torchvision transforms
-        """
+
         self.img_root = img_root
         self.subsets = subsets
         self.transform = transform
 
-        # 读取标注文件
         self.df = pd.read_csv(label_file, header=None)
         self.df.columns = ["filename", "angle1", "angle2", "angle3"]
 
-        # 建立 filename -> 文件路径 映射
         self.file_map = {}
         for sub in subsets:
             folder = os.path.join(img_root, sub)
             for fname in os.listdir(folder):
                 self.file_map[fname] = os.path.join(folder, fname)
 
-        # 保留存在于 file_map 中的样本（防止标注比图片多或少）
         self.df = self.df[self.df["filename"].isin(self.file_map.keys())].reset_index(drop=True)
 
     def __len__(self):
@@ -96,10 +88,8 @@ class SimpleCNN(nn.Module):
 
 
 if __name__ == '__main__':
-    # =========================
-    # 2️⃣ 数据加载
-    # =========================
-    data_root = "Spinal-AI2024"  # 根目录名
+
+    data_root = "Spinal-AI2024" 
     train_label_file = os.path.join(data_root, "Cobb_spinal-AI2024-train_gt.txt")
     test_label_file  = os.path.join(data_root, "Cobb_spinal-AI2024-test_gt.txt")
 
@@ -109,7 +99,6 @@ if __name__ == '__main__':
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
-    # 自动合并 subset1-4
     train_dataset = SpinalDataset(
         img_root=data_root,
         label_file=train_label_file,
@@ -117,7 +106,6 @@ if __name__ == '__main__':
         transform=transform
     )
 
-    # 测试集用 subset5
     test_dataset = SpinalDataset(
         img_root=data_root,
         label_file=test_label_file,
@@ -128,11 +116,11 @@ if __name__ == '__main__':
     train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True, num_workers=4)
     test_loader = DataLoader(test_dataset, batch_size=256, shuffle=False, num_workers=4)
 
-    print(f"✅ 训练样本数: {len(train_dataset)}")
-    print(f"✅ 测试样本数: {len(test_dataset)}")
+    print(f"✅ Train samples: {len(train_dataset)}")
+    print(f"✅ Test samples: {len(test_dataset)}")
 
     # =========================
-    # 3️⃣ CNN 模型定义（回归3个角度）
+    # 3️⃣ CNN Model
     # =========================
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -142,12 +130,12 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     # =========================
-    # 4️⃣ 训练循环
+    # 4️⃣ Train loop
     # =========================
 
     epochs = 100
-    train_losses = []  # 📊 记录每个 epoch 的 loss
-    test_maes = []  # 📊 （可选）记录每个 epoch 的 MAE
+    train_losses = []  
+    test_maes = []  
 
     for epoch in range(epochs):
         model.train()
@@ -167,9 +155,9 @@ if __name__ == '__main__':
 
         avg_loss = total_loss / len(train_loader)
         train_losses.append(avg_loss)
-        print(f"📦 Epoch [{epoch + 1}/{epochs}] 平均训练损失: {avg_loss:.4f}")
+        print(f"📦 Epoch [{epoch + 1}/{epochs}] Avg loss: {avg_loss:.4f}")
 
-        # ✅ 每个 epoch 测试一次 MAE（可选）
+
         model.eval()
         mae = 0
         with torch.no_grad():
@@ -179,17 +167,17 @@ if __name__ == '__main__':
                 mae += torch.mean(torch.abs(outputs - labels)).item()
         mae /= len(test_loader)
         test_maes.append(mae)
-        print(f"📊 测试集 MAE: {mae:.4f}")
+        print(f"📊 Testset MAE: {mae:.4f}")
 
     os.makedirs("checkpoints", exist_ok=True)
     torch.save(model.state_dict(), "checkpoints/final_model.pth")
-    print("✅ 模型已保存到 checkpoints/final_model.pth")
+    print("✅ save to checkpoints/final_model.pth")
 
-    # 保存训练曲线到 CSV
     loss_df = pd.DataFrame({
         "epoch": list(range(1, epochs+1)),
         "train_loss": train_losses,
         "test_mae": test_maes
     })
     loss_df.to_csv("training_log.csv", index=False, encoding="utf-8-sig")
-    print("📊 训练日志已保存到 training_log.csv")
+
+    print("📊 log save as training_log.csv")
